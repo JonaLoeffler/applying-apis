@@ -12,14 +12,14 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 /**
  * This java project collects Java repositories from GitHub, selects a part of
  * them based on their declared dependencies and parses them.
- * 
+ *
  * This class contains the main method of this project with all its customizable
  * parameters (except for the GitHub PAT which can be found in
  * {@code RepositoriesPicker}).
  */
 public class Application {
         private static final Logger log = Utils.getLogger();
-        private static final boolean COLLECT_REPOSITORIES = true;
+        private static final boolean COLLECT_REPOSITORIES = false;
         private static final boolean GET_DEPENDENCIES_OF_COLLECTED_REPOSITORIES = true;
         private static final boolean GET_MCR_TAGS_OF_COLLECTED_REPOSITORIES = true;
         private static final boolean SELECT_REPOSITORIES = true;
@@ -31,13 +31,12 @@ public class Application {
         private static final int COMMITS_LIMIT = 100; // at least 100 commits
         private static final int DEPENDENCIES_LIMIT = 30; // at most 30 dependencies
         private static final int FILES_LIMIT = 1000; // at most 1000 files
-        private static final List<String> DEPENDENCIES = List.of("org.apache.lucene:lucene-analyzers-common",
-                        "org.apache.lucene:lucene-core"); // can be left empty
+        private static final List<String> DEPENDENCIES = List.of(); // can be left empty
 
         /**
          * Runs everything that is needed according to the chosen parameters in the
          * {@code Application} class.
-         * 
+         *
          * @param args
          * @throws IllegalStateException
          * @throws IOException
@@ -85,7 +84,7 @@ public class Application {
          * {@code Parser} then parses the downloaded Java files. The
          * {@code DependenciesAllocator} assigns the APIs to the found API usages in the
          * Java files of the repository.
-         * 
+         *
          * @param repository
          */
         public static void parse(Map<String, String> repository) {

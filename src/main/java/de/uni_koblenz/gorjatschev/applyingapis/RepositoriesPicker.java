@@ -42,7 +42,7 @@ public class RepositoriesPicker {
      * {@code starsLimit}, the {@code contributorsLimit} and the
      * {@code commitsLimit}. Writes them in the CSV file
      * {@value Utils#O_COLLECTED_REPOSITORIES_FILE}.
-     * 
+     *
      * @param starsLimit
      * @param contributorsLimit
      * @param commitsLimit
@@ -69,7 +69,7 @@ public class RepositoriesPicker {
      * not have a src/main/java directory or have less than two resolvable
      * dependencies. Writes them in the CSV file
      * {@value Utils#O_REPOSITORIES_WITH_DEPENDENCIES_FILE}.
-     * 
+     *
      * @throws IOException
      */
     public static void getDependenciesOfCollectedRepositories() throws IOException {
@@ -114,7 +114,7 @@ public class RepositoriesPicker {
      * Assigns the MCR tags to the filtered repositories based on their
      * dependencies. Filters out repositories that do not have MCR tags and writes
      * them in the CSV file {@value Utils#O_REPOSITORIES_WITH_TAGS_FILE}.
-     * 
+     *
      * @throws IOException
      */
     public static void getMcrTagsOfDependenciesOfCollectedRepositories() throws IOException {
@@ -166,8 +166,8 @@ public class RepositoriesPicker {
      * files. Writes them in the CSV file
      * {@value Utils#getSelectedRepositoriesFile(List)} with {@code dependencies} as
      * {@code List}.
-     * 
-     * 
+     *
+     *
      * @param dependencies
      * @param dependenciesLimit
      * @param filesLimit
@@ -203,7 +203,7 @@ public class RepositoriesPicker {
      * filters out repositories with less than {@code contributorsLimit}
      * contributors, less than {@code commitsLimit} commits and less than one POM
      * file.
-     * 
+     *
      * @param starsLimit
      * @param contributorsLimit
      * @param commitsLimit
@@ -263,7 +263,7 @@ public class RepositoriesPicker {
     /**
      * Returns a string version of the ordered list of the dependencies from the
      * {@code repositoryDependenciesList}.
-     * 
+     *
      * @param repositoryDependenciesList
      * @return The string version of the ordered dependencies list
      */
@@ -280,7 +280,7 @@ public class RepositoriesPicker {
      * null or groupId or artifactId contains one of {@code &#123;&$@}. Afterwards
      * returns the string version of the ordered list of the dependencies if there
      * are at least two dependencies.
-     * 
+     *
      * @param repository
      * @return The string version of the ordered dependencies list or null if there
      *         are less than two dependencies in the list
@@ -308,7 +308,7 @@ public class RepositoriesPicker {
      * Creates an HttpURLConnection for the URL {@code url} using the authorization
      * {@code AUTHORIZATION}, collects the response and parses it using the
      * JsonParser.
-     * 
+     *
      * @param url
      * @return The JsonElement of the parsed result
      * @throws IOException

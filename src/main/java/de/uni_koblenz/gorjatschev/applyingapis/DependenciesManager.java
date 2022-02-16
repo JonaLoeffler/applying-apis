@@ -38,7 +38,7 @@ public class DependenciesManager {
      * Constructor for a {@code DependenciesManager}. Collects all dependency lists
      * from each model in the {@code models} list and puts them in the
      * {@code dependencies} map.
-     * 
+     *
      * @param repositoryName
      * @param models
      */
@@ -57,7 +57,7 @@ public class DependenciesManager {
     /**
      * Resolves the identifiers groupId, artifactId, and version of all dependencies
      * in all models.
-     * 
+     *
      * @return A set of maps of dependency identifiers
      */
     public Set<Map<String, String>> resolveIdentifiers() {
@@ -87,7 +87,7 @@ public class DependenciesManager {
      * the set {@code dependenciesIdentifiers} and writes them in the CSV file
      * {@value Utils#getDependenciesFile(String)} with {@code repositoryName} as
      * {@code String}.
-     * 
+     *
      * @param dependenciesIdentifiers
      * @throws IOException
      */
@@ -101,7 +101,7 @@ public class DependenciesManager {
     /**
      * Gets the MCR tags of each dependency identifiers map in the list
      * {@code dependenciesIdentifiers} for the {@code RepositoriesPicker}.
-     * 
+     *
      * @param dependenciesIdentifiers
      * @return The list of maps of the dependencies with their MCR tags
      */
@@ -123,7 +123,7 @@ public class DependenciesManager {
      * Gets the {@code groupId} of the given {@code dependency} from the
      * {@code model}. If the {@code groupId} is a variable, looks up the model and
      * parent {@code groupId} and the model's and the parent's properties.
-     * 
+     *
      * @param dependency
      * @param model
      * @return The found {@code groupId} or "null" otherwise
@@ -156,7 +156,7 @@ public class DependenciesManager {
      * Gets the {@code artifactId} of the given {@code dependency} from the
      * {@code model}. If the {@code artifactId} is a variable, looks up the model
      * {@code artifactId}, and the model's and the parent's properties.
-     * 
+     *
      * @param dependency
      * @param model
      * @return The found {@code artifactId} or "null" otherwise
@@ -188,7 +188,7 @@ public class DependenciesManager {
      * parent {@code version}, and the model's and the parent's properties.
      * Otherwise, if the {@code version} is null, looks up the parent dependencies
      * for a {@code version} of this dependency.
-     * 
+     *
      * @param dependency
      * @param model
      * @return The found {@code version} or "null" otherwise
@@ -223,7 +223,7 @@ public class DependenciesManager {
     /**
      * Searches for the string {@code variable} in the properties of the
      * {@code parent}.
-     * 
+     *
      * @param variable
      * @param parent
      * @return The value of the property with the key {@code variable}.
@@ -240,7 +240,7 @@ public class DependenciesManager {
     /**
      * Searches for the {@code dependency} in the dependencies of the parent of the
      * {@code model} and returns its {@code version}.
-     * 
+     *
      * @param dependency
      * @param model
      * @return The version of the found dependency
@@ -268,10 +268,10 @@ public class DependenciesManager {
     /**
      * Gets the MCR categories and MCR tags of the {@code dependency} from the Maven
      * repository site.
-     * 
+     *
      * @param dependency
      * @return The map of the {@code dependency} extended with the MCR categories
-     *         and MCR tags.
+     * and MCR tags.
      */
     private static Map<String, String> getMCRCategoriesAndMCRTags(Map<String, String> dependency) {
         Map<String, String> dependenciesTuples = new HashMap<>();
@@ -297,7 +297,7 @@ public class DependenciesManager {
     /**
      * Creates an HttpURLConnection for the URL {@code url}, collects the response
      * and parses it using jsoup.
-     * 
+     *
      * @param url
      * @return The document corresponding to the parsed result
      * @throws IOException
