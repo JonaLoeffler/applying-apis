@@ -74,7 +74,8 @@ public class RepositoriesPicker {
      */
     public static void getDependenciesOfCollectedRepositories() throws IOException {
         List<Map<String, String>> repositoriesWithDependenciesList = new ArrayList<>();
-        Utils.readCSVFile(Utils.O_COLLECTED_REPOSITORIES_FILE).forEach(repository -> {
+        log.info("--Getting dependencies of collected repositories");
+        Utils.readCSVFile(Utils.O_COLLECTED_REPOSITORIES_FILE).parallelStream().map(repository -> {
             String repositoryName = repository.get(Utils.REPOSITORY_NAME);
             RepositoryManager repositoryManager;
             try {
@@ -88,8 +89,12 @@ public class RepositoriesPicker {
             } catch (GitAPIException | IOException | InvalidPathException e) {
                 log.warn("--Could not collect repository \"" + repositoryName + "\" because of "
                         + e.getClass().getName() + ".");
+            } finally {
+                log.info("--Fetched dependencies of " + repositoryName);
+                return repository;
             }
-        });
+
+        }).collect(Collectors.toList());
         Utils.writeCSVFile(Utils.O_REPOSITORIES_WITH_DEPENDENCIES_FILE, repositoriesWithDependenciesList);
         Utils.deleteFileRecursively(new File(Utils.T_GIT_FILES_DIR));
 
