@@ -183,20 +183,32 @@ public class RepositoriesPicker {
         log.info("Selecting repositories with not more than " + dependenciesLimit + " dependencies and " + filesLimit
                 + " files that contain the dependencies " + dependencies.toString() + "...");
         List<Map<String, String>> selection = new ArrayList<>();
-        Utils.readCSVFile(Utils.O_REPOSITORIES_WITH_DEPENDENCIES_FILE).forEach(repository -> {
+        List<Map<String, String>> all = Utils.readCSVFile(Utils.O_REPOSITORIES_WITH_DEPENDENCIES_FILE);
+        all.forEach(repository -> {
             List<String> dependenciesList = new ArrayList<>(
                     Arrays.asList(repository.get(Utils.DEPENDENCIES).replace("[", "").replace("]", "").split(",")));
-            if (dependenciesList.size() <= dependenciesLimit && dependenciesList.containsAll(dependencies)) {
+            boolean selected = false;
+            if (dependenciesList.size() <= dependenciesLimit) {
                 int numberFiles;
                 try {
                     numberFiles = request(Utils.GITHUB_API_URL + "search/code?q=extension:java+repo:"
-                            + repository.get(Utils.REPOSITORY_NAME)).getAsJsonObject().get("total_count").getAsInt();
+                            + repository.get(Utils.REPOSITORY_NAME), 3).getAsJsonObject().get("total_count").getAsInt();
                 } catch (IOException | InterruptedException e) {
+                    log.warn("--Failed to determine number of files, assuming 0...");
                     numberFiles = 0;
                 }
                 if (numberFiles <= filesLimit) {
                     selection.add(Utils.createMap(Utils.REPOSITORY_NAME, repository.get(Utils.REPOSITORY_NAME)));
+                    selected = true;
                 }
+            }
+
+            String place = "(" + all.indexOf(repository) + ", " + all.size() + ")";
+
+            if (selected) {
+                log.info("--selected " + place + " " + repository.get(Utils.REPOSITORY_NAME));
+            } else {
+                log.info("--skipped  " + place + " " + repository.get(Utils.REPOSITORY_NAME));
             }
         });
         Utils.writeCSVFile(Utils.getSelectedRepositoriesFile(dependencies), selection);
@@ -222,7 +234,7 @@ public class RepositoriesPicker {
         for (int page = 1; page <= 10; page++) {
             String url = Utils.GITHUB_API_URL + "search/repositories?q=language:java+stars:%3E=" + starsLimit
                     + "&sort=stars&order=asc&per_page=100&page=" + page;
-            JsonObject repositories = request(url).getAsJsonObject();
+            JsonObject repositories = request(url, 3).getAsJsonObject();
             JsonArray items = repositories.get("items").getAsJsonArray();
             for (JsonElement e : items) {
                 JsonObject repository = e.getAsJsonObject();
@@ -232,20 +244,20 @@ public class RepositoriesPicker {
                 }
                 allRepositories.add(name);
                 JsonArray contributors = request(
-                        Utils.GITHUB_API_URL + "repos/" + name + "/contributors?per_page=" + contributorsLimit)
+                        Utils.GITHUB_API_URL + "repos/" + name + "/contributors?per_page=" + contributorsLimit, 3)
                                 .getAsJsonArray();
                 // Filter out repositories with not enough contributors
                 if (contributors.size() < contributorsLimit) {
                     continue;
                 }
                 JsonArray commits = request(
-                        Utils.GITHUB_API_URL + "repos/" + name + "/commits?per_page=" + commitsLimit).getAsJsonArray();
+                        Utils.GITHUB_API_URL + "repos/" + name + "/commits?per_page=" + commitsLimit, 3).getAsJsonArray();
                 // Filter out repositories with not enough commits
                 if (commits.size() < commitsLimit) {
                     continue;
                 }
                 JsonObject pomFiles = request(
-                        Utils.GITHUB_API_URL + "search/code?q=filename:pom.xml+extension:xml+repo:" + name)
+                        Utils.GITHUB_API_URL + "search/code?q=filename:pom.xml+extension:xml+repo:" + name, 3)
                                 .getAsJsonObject();
                 // Filter out repositories with no POM file
                 if (pomFiles.get("total_count").getAsInt() == 0) {
@@ -319,9 +331,15 @@ public class RepositoriesPicker {
      * @throws IOException
      * @throws InterruptedException
      */
-    private static JsonElement request(String url) throws IOException, InterruptedException {
+    private static JsonElement request(String url, int tries) throws IOException, InterruptedException {
+        if (tries == 0) {
+            throw new IOException("No more tries left");
+        }
+
         HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
         connection.setRequestProperty("Authorization", AUTHORIZATION);
+        connection.setRequestProperty("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0");
+        connection.setRequestProperty("Cookie", "octo=GH1.1.391400171.1635172934; logged_in=yes; dotcom_user=JonaLoeffler; color_mode=%7B%22color_mode%22%3A%22dark%22%2C%22light_theme%22%3A%7B%22name%22%3A%22light%22%2C%22color_mode%22%3A%22light%22%7D%2C%22dark_theme%22%3A%7B%22name%22%3A%22dark%22%2C%22color_mode%22%3A%22dark%22%7D%7D; tz=Europe%2FBerlin");
         try {
             InputStream response = connection.getInputStream();
             return JsonParser.parseReader(new InputStreamReader(response));
@@ -330,7 +348,7 @@ public class RepositoriesPicker {
             log.info("--Sleeping...");
             Thread.sleep(60001);
             log.info("--Resuming.");
-            return request(url);
+            return request(url, tries - 1);
         }
     }
 

@@ -20,8 +20,8 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 public class Application {
         private static final Logger log = Utils.getLogger();
         private static final boolean COLLECT_REPOSITORIES = false;
-        private static final boolean GET_DEPENDENCIES_OF_COLLECTED_REPOSITORIES = true;
-        private static final boolean GET_MCR_TAGS_OF_COLLECTED_REPOSITORIES = true;
+        private static final boolean GET_DEPENDENCIES_OF_COLLECTED_REPOSITORIES = false;
+        private static final boolean GET_MCR_TAGS_OF_COLLECTED_REPOSITORIES = false;
         private static final boolean SELECT_REPOSITORIES = true;
         private static final boolean PARSE_REPOSITORIES = true;
         private static final boolean COLLECT_API_CATEGORIES = true;
