@@ -8,34 +8,30 @@ from pyspark.sql.session import SparkSession
 from pyspark.sql.types import StringType
 
 
-def read(file: str):
-    return (
-        spark.read.option("inferSchema", "true")
-        .option("header", "true")
-        .csv(f"./output/data/{file}")
-    )
+def read():
+    files = [f"./output/data/{file}" for file in os.listdir("./output/data")]
+
+    return spark.read.option("inferSchema", "true").option("header", "true").csv(files)
 
 
 def write(df, name):
-    df.toPandas().to_csv(name, sep=",", header=True, index=False)
-
-
-def aggregate(df):
-    return (
-        df.filter(df.isAPIClass == "true")
-        .groupby(["packageName"])
-        .agg(F.count("mcrCategories").alias("count"))
-    )
+    (df.write.format("csv").option("header", "true").mode("overwrite").save(name))
 
 
 if __name__ == "__main__":
     sc = SparkContext("local", "msr3")
     spark = SparkSession(sc)
 
-    files = os.listdir("./output/data")
-    os.mkdir("./output/analyzed_packages")
+    df = read()
+    df = df.filter(df.isAPIClass == "true").withColumn(
+        "usedPackageOfElement",
+        F.regexp_extract("usedClassOfElement", "(.*)\\.[A-Z]", 1),
+    )
 
-    for file in files:
-        df = read(file)
-        df = aggregate(df)
-        write(df, "./output/analyzed_packages/" + file.replace("data_", "packages_"))
+    agg = (
+        df.groupby(["usedPackageOfElement"])
+        .agg(F.count("mcrCategories").alias("count"))
+        .orderBy("count")
+    )
+
+    write(agg, "./output/analyzed_packages/aggregated")

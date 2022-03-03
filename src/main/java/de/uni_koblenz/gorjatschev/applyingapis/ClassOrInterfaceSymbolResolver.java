@@ -59,7 +59,7 @@ public class ClassOrInterfaceSymbolResolver {
     /**
      * Resolves the symbols contained in the child nodes of a
      * {@code ClassOrInterfaceDeclaration}.
-     * 
+     *
      * @param classOrInterface
      * @return A list of the resolved symbols as maps
      */
@@ -81,7 +81,7 @@ public class ClassOrInterfaceSymbolResolver {
      * Resolves all symbols that are descendants of the node {@code n}. Walks over
      * all possible elements that can be descendants of the node and contain at
      * least one type.
-     * 
+     *
      * @param n
      * @return A list of the resolved symbols as maps
      */
@@ -121,7 +121,7 @@ public class ClassOrInterfaceSymbolResolver {
      * Resolves all nodes of type {@code NodeWithType} that are descendants of node
      * {@code n}. Resolve the symbols that are possibly part of the node's
      * properties as well.
-     * 
+     *
      * @param n
      * @param classOfNode
      * @return A list of the resolved symbols as maps
@@ -160,7 +160,7 @@ public class ClassOrInterfaceSymbolResolver {
      * Resolves all nodes of type {@code FieldAccessExpr} or {@code NameExpr}
      * (extend {@code Resolvable<ResolvedValueDeclaration>}) that are descendants of
      * node {@code n}.
-     * 
+     *
      * @param n
      * @param classOfNode
      * @return A list of the resolved symbols as maps
@@ -201,7 +201,7 @@ public class ClassOrInterfaceSymbolResolver {
      * {@code Resolvable<ResolvedEnumConstantDeclaration>}) that are descendants of
      * node {@code n}. Resolve the symbols that are possibly part of the node's
      * properties as well.
-     * 
+     *
      * @param n
      * @param classOfNode
      * @return A list of the resolved symbols as maps
@@ -227,7 +227,7 @@ public class ClassOrInterfaceSymbolResolver {
      * Resolves all nodes of type {@code ThisExpr} (extend
      * {@code Resolvable<ResolvedTypeDeclaration>}) that are descendants of node
      * {@code n}.
-     * 
+     *
      * @param n
      * @param classOfNode
      * @return A list of the resolved symbols as maps
@@ -254,7 +254,7 @@ public class ClassOrInterfaceSymbolResolver {
      * {@code Resolvable<ResolvedReferenceTypeDeclaration>}) that are descendants of
      * node {@code n}. Resolve the symbols that are possibly part of the node's
      * properties as well.
-     * 
+     *
      * @param n
      * @param classOfNode
      * @return A list of the resolved symbols as maps
@@ -281,7 +281,7 @@ public class ClassOrInterfaceSymbolResolver {
      * Resolves all nodes of type {@code AnnotationExpr} (extend
      * {@code Resolvable<ResolvedAnnotationDeclaration>}) that are descendants of
      * node {@code n}.
-     * 
+     *
      * @param n
      * @param classOfNode
      * @return A list of the resolved symbols as maps
@@ -308,7 +308,7 @@ public class ClassOrInterfaceSymbolResolver {
      * {@code MethodReferenceExpr} (extend
      * {@code Resolvable<ResolvedMethodDeclaration>}) that are descendants of node
      * {@code n}.
-     * 
+     *
      * @param n
      * @param classOfNode
      * @return A list of the resolved symbols as maps
@@ -335,7 +335,7 @@ public class ClassOrInterfaceSymbolResolver {
      * {@code Resolvable<ResolvedConstructorDeclaration>}) that are descendants of
      * node {@code n}. Resolve the symbols that are possibly part of the node's
      * properties as well.
-     * 
+     *
      * @param n
      * @param classOfNode
      * @return A list of the resolved symbols as maps
@@ -361,7 +361,7 @@ public class ClassOrInterfaceSymbolResolver {
     /**
      * Resolves the symbols that are properties of the {@code node}. Properties are
      * type parameters, thrown exceptions, extended types, and implemented types.
-     * 
+     *
      * @param node
      * @return A list of the resolved symbols as maps
      */
@@ -400,7 +400,7 @@ public class ClassOrInterfaceSymbolResolver {
      * Solves a {@code ResolvedType}. A {@code ResolvedType} of interest can be a
      * {@code ResolvedReferenceType}, a {@code ResolvedArrayType}, a
      * {@code ResolvedUnionType}, or a {@code ResolvedWildcard}.
-     * 
+     *
      * @param type
      * @return A list of the resolved symbols as maps
      */
@@ -439,7 +439,7 @@ public class ClassOrInterfaceSymbolResolver {
 
     /**
      * Tries to resolve a {@code Type}.
-     * 
+     *
      * @param type
      * @return A list of the resolved symbols as maps
      */
@@ -456,7 +456,7 @@ public class ClassOrInterfaceSymbolResolver {
 
     /**
      * Checks if the given {@code node} is actually a package name.
-     * 
+     *
      * @param node
      * @return True if the {@code node} is a package name, false otherwise.
      */
@@ -482,7 +482,7 @@ public class ClassOrInterfaceSymbolResolver {
 
     /**
      * Creates a map for a {@code node} that contains all its important information.
-     * 
+     *
      * @param node
      * @param apiClass
      * @return The created node map

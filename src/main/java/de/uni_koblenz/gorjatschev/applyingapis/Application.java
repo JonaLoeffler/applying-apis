@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.nio.file.Path;
 
 import org.apache.logging.log4j.Logger;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -22,7 +23,7 @@ public class Application {
         private static final boolean COLLECT_REPOSITORIES = false;
         private static final boolean GET_DEPENDENCIES_OF_COLLECTED_REPOSITORIES = false;
         private static final boolean GET_MCR_TAGS_OF_COLLECTED_REPOSITORIES = false;
-        private static final boolean SELECT_REPOSITORIES = true;
+        private static final boolean SELECT_REPOSITORIES = false;
         private static final boolean PARSE_REPOSITORIES = true;
         private static final boolean COLLECT_API_CATEGORIES = true;
         private static final boolean DOWNLOAD_JARS = true;
@@ -67,6 +68,7 @@ public class Application {
                 // Parse the selected repositories
                 if (PARSE_REPOSITORIES) {
                         Utils.readCSVFile(Utils.getSelectedRepositoriesFile(DEPENDENCIES))
+                                        .parallelStream()
                                         .forEach(repository -> parse(repository));
                 }
                 log.info("Successful.");
@@ -110,6 +112,16 @@ public class Application {
                 } else {
                         log.info("Skipping repository \"" + repositoryName
                                         + "\" since the file with the parsing results already exists.");
+
+                        File gitDirectory = new File(Utils.T_GIT_FILES_DIR + repositoryName);
+                        if (gitDirectory.exists()) {
+                            try {
+                                Utils.deleteFileRecursively(gitDirectory);
+                            } catch (Exception e) {
+                                log.warn("----Could not delete  \"" + Utils.getUnixPath(Path.of(gitDirectory.getPath()))
+                                        + "\" because of " + e + ".");
+                            }
+                        }
                 }
         }
 
