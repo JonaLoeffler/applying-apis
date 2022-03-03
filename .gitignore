@@ -3,5 +3,8 @@ env/*
 temp/*
 target/*
 src/main/python/__pycache__/*
+output/analyzed_packages/*
+output/dependencies/*
 output/spark/*
+output/data/*
 log.log
