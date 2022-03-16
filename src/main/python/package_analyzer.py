@@ -3,13 +3,11 @@ import os
 import pyspark.sql.functions as F
 from pyspark.sql.window import Window
 from pyspark import SparkContext
-from pyspark.ml import Pipeline
-from pyspark.ml.feature import HashingTF, MinHashLSH
 from pyspark.sql.session import SparkSession
-from pyspark.sql.types import StringType
 
 
-def read_dir(directory: str):
+
+def read_dir(spark: SparkSession, directory: str):
     print(f"Reading {directory}")
     files = [f"{directory}/{file}" for file in os.listdir(directory)]
 
@@ -70,27 +68,20 @@ def enrich(df):
 
 
 if __name__ == "__main__":
-    sc = SparkContext.getOrCreate()
-
     spark = (
-        SparkSession(sc)
-        .builder.master("yarn")
-        .appName("Spark job new_job")
+        SparkSession.builder.appName("MSR")
         .config("spark.driver.memory", "10g")
-        .config("spark.submit.deployMode", "client")
         .config("spark.executor.memory", "15g")
-        .config("spark.executor.cores", 4)
-        .config("spark.yarn.queue", "short")
-        .enableHiveSupport()
+        .config("spark.executor.cores", "4")
         .getOrCreate()
     )
 
     if os.path.exists("./output/analyzed_packages/joined"):
         print("Joined table already exists")
-        df = read_dir("./output/analyzed_packages/joined")
+        df = read_dir(spark, "./output/analyzed_packages/joined")
     else:
         print("Joined table does not exist yet, running full analysis")
-        df = read_dir("./output/data")
+        df = read_dir(spark, "./output/data")
         df = enrich(df)
 
         write(df, "./output/analyzed_packages/joined")
