@@ -3,7 +3,7 @@ env/*
 temp/*
 target/*
 src/main/python/__pycache__/*
-output/analyzed_packages/*
+output/analyzed_packages/joined/*
 output/dependencies/*
 output/spark/*
 output/data/*

@@ -1,10 +1,47 @@
 import os
 
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+
 import pyspark.sql.functions as F
+import pyspark.sql.types as T
 from pyspark.sql.window import Window
 from pyspark import SparkContext
 from pyspark.sql.session import SparkSession
 
+
+PAIRS = [
+    ("junit:junit", "org.mockito:mockito-core"),
+    ("junit:junit", "org.hamcrest:hamcrest-all"),
+    ("junit:junit", "org.openjdk.jmh:jmh-core"),
+    # ("junit:junit", "org.openjdk.jmh:jmh-generator-annprocess"),
+    ("org.apache.lucene:lucene-core", "org.apache.lucene:lucene-analyzers-common"),
+    ("o.springfox:springfox-swagger-ui", "io.springfox:springfox-swagger2"),
+    ("org.apache.lucene:lucene-analyzers-common", "org.apache.lucene:lucene-core"),
+    ("org.openjdk.jmh:jmh-core", "org.openjdk.jmh:jmh-generator-annprocess"),
+    (
+        "org.apache.maven.plugin-tools:maven-plugin-annotations",
+        "org.apache.maven:maven-plugin-api",
+    ),
+    ("org.apache.maven:maven-core", "org.apache.maven:maven-plugin-api"),
+    ("org.apache.logging.log4j:log4j-api", "org.apache.logging.log4j:log4j-core"),
+    (
+        "com.fasterxml.jackson.core:jackson-annotations",
+        "com.fasterxml.jackson.core:jackson-core",
+    ),
+    ("org.springframework:spring-beans", "org.springframework:spring-core"),
+    ("org.junit.jupiter:junit-jupiter-api", "org.junit.jupiter:junit-jupiter-engine"),
+    ("org.apache.curator:curator-framework", "org.apache.curator:curator-recipes"),
+    ("org.apache.poi:poi", "org.apache.poi:poi-ooxml"),
+    (
+        "org.apache.maven.plugin-tools:maven-plugin-annotations",
+        "org.apache.maven:maven-core",
+    ),
+    ("org.eclipse.jetty:jetty-server", "org.eclipse.jetty:jetty-servlet"),
+    ("org.springframework:spring-web", "org.springframework:spring-webmvc"),
+    ("org.springframework:spring-context", "org.springframework:spring-core"),
+]
 
 
 def read_dir(spark: SparkSession, directory: str):
@@ -32,6 +69,16 @@ def enrich(df):
         )
         .withColumn("packageList", F.split("package", "\\."))
         .withColumn("packageDepth", F.size("packageList"))
+        # Fix mislabeled hamcrest api uses
+        .withColumn(
+            "fixedApi",
+            F.when(
+                F.col("package").substr(0, 12) == "org.hamcrest",
+                "org.hamcrest:hamcrest-all",
+            ).otherwise(df.api),
+        )
+        .drop("api")
+        .withColumnRenamed("fixedApi", "api")
     )
 
     # determine the actual api base packages
@@ -63,11 +110,101 @@ def enrich(df):
                 ".",
             ),
         )
-        .drop("one", "packageList")
+        .drop("one", "packageList", "package")
+        .withColumnRenamed("finalPackage", "package")
     )
 
 
-if __name__ == "__main__":
+def analyze(df, group, api1, api2):
+    fst = F.when(df.api == api1, F.col("package")).otherwise(None)
+    snd = F.when(df.api == api2, F.col("package")).otherwise(None)
+
+    return (
+        df.filter((df.api == api1) | (df.api == api2))
+        .withColumn("packageFirst", fst)
+        .withColumn("packageSecond", snd)
+        .groupBy(group)
+        .agg(
+            F.collect_set("packageFirst").alias("pfs"),
+            F.collect_set("packageSecond").alias("pss"),
+        )
+        .filter(F.size(F.col("pfs")) > 0)
+        .filter(F.size(F.col("pss")) > 0)
+        .select("pfs", "pss")
+        .withColumn("first", F.explode("pfs"))
+        .withColumn("second", F.explode("pss"))
+        .groupBy("first")
+        .pivot("second")
+        .count()
+        .fillna(0)
+    )
+
+
+def visualize(res1, res2, res3, api1, api2):
+
+    sns.set(rc={"figure.figsize": (15, 8)})
+
+    f, (ax1, ax2, ax3, axcb) = plt.subplots(
+        1, 4, gridspec_kw={"width_ratios": [1, 1, 1, 0.08]}
+    )
+    ax1.get_shared_y_axes().join(ax2, ax3)
+    f.suptitle(f"{api1} and {api2}")
+
+    ax1.set_title(f"Co-occurence per package")
+    ax2.set_title(f"Co-occurence per class")
+    ax3.set_title(f"Co-occurence per method")
+
+    g1 = sns.heatmap(
+        res1,
+        annot=True,
+        fmt="d",
+        annot_kws={"size": 10},
+        cmap="YlGnBu",
+        xticklabels=1,
+        yticklabels=1,
+        cbar=False,
+        ax=ax1,
+    )
+    g1.set_ylabel("")
+    g2 = sns.heatmap(
+        res2,
+        annot=True,
+        fmt="d",
+        annot_kws={"size": 10},
+        cmap="YlGnBu",
+        xticklabels=1,
+        yticklabels=0,
+        ax=ax2,
+        cbar=False,
+    )
+    g2.set_ylabel("")
+    g3 = sns.heatmap(
+        res3,
+        annot=True,
+        fmt="d",
+        annot_kws={"size": 10},
+        cmap="YlGnBu",
+        xticklabels=1,
+        yticklabels=0,
+        ax=ax3,
+        cbar_ax=axcb,
+    )
+    g3.set_ylabel("")
+
+    for ax in [g1, g2, g3]:
+        tl = ax.get_xticklabels()
+        ax.set_xticklabels(tl, rotation=50, ha="right")
+        tly = ax.get_yticklabels()
+        ax.set_yticklabels(tly, rotation=0)
+
+    plt.subplots_adjust(left=0.25, right=0.9, bottom=0.3, top=0.85)
+
+    print("Saving figure...")
+    plt.savefig(f"output/analyzed_packages/{api1}_{api2}.png", dpi=500)
+    # plt.show()
+
+
+def main():
     spark = (
         SparkSession.builder.appName("MSR")
         .config("spark.driver.memory", "10g")
@@ -84,12 +221,27 @@ if __name__ == "__main__":
         df = read_dir(spark, "./output/data")
         df = enrich(df)
 
-        write(df, "./output/analyzed_packages/joined")
+        write(df.sample(fraction=1.0), "./output/analyzed_packages/joined")
 
-    agg = (
-        df.groupby("api", "finalPackage")
-        .agg(F.count("api").alias("count"))
-        .orderBy("count")
-    )
+    for api1, api2 in PAIRS:
+        try:
+            groupPkg = ["repository", "packageName"]
+            groupCls = ["repository", "packageName", "className"]
+            groupMtd = ["repository", "packageName", "className", "methodName"]
 
-    write(agg, "./output/analyzed_packages/aggregated")
+            res1 = analyze(df, groupPkg, api1, api2).toPandas().set_index("first")
+            res2 = analyze(df, groupCls, api1, api2).toPandas().set_index("first")
+            res3 = analyze(df, groupMtd, api1, api2).toPandas().set_index("first")
+
+            res1, res2 = res1.align(res2, fill_value=0)
+            res2, res3 = res2.align(res3, fill_value=0)
+            res1, res3 = res1.align(res3, fill_value=0)
+
+            visualize(res1, res2, res3, api1, api2)
+        except Exception as e:
+            print(f"Failed to visualize {api1} and {api2}")
+            print(e)
+
+
+if __name__ == "__main__":
+    main()
