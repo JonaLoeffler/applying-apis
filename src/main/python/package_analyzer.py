@@ -1,15 +1,11 @@
 import os
 
-import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
 import pyspark.sql.functions as F
-import pyspark.sql.types as T
 from pyspark.sql.window import Window
-from pyspark import SparkContext
 from pyspark.sql.session import SparkSession
-
 
 PAIRS = [
     ("junit:junit", "org.mockito:mockito-core"),
@@ -141,8 +137,7 @@ def analyze(df, group, api1, api2):
 
 
 def visualize(res1, res2, res3, api1, api2):
-
-    sns.set(rc={"figure.figsize": (15, 8)})
+    sns.set(rc={"figure.figsize": (16, 8)})
 
     f, (ax1, ax2, ax3, axcb) = plt.subplots(
         1, 4, gridspec_kw={"width_ratios": [1, 1, 1, 0.08]}
