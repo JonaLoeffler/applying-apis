@@ -254,9 +254,9 @@ if __name__ == "__main__":
     create_repositories_file(df)
     create_dependencies_with_packages_file(df)
 
-    for api1, api2 in PAIRS[:3]:
+    for api1, api2 in PAIRS:
         try:
-            groupPkg = ["repository"]
+            groupPkg = ["repository", "packageName"]
             groupCls = ["repository", "packageName", "className"]
             groupMtd = ["repository", "packageName", "className", "methodName"]
 

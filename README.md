@@ -1,7 +1,31 @@
+# On the changes done for assignment 3
+To facilitate the analysis of API-packages, some changes and additions have been
+made to the original code.
+
+Most importantly, a new analysis and visualization script has been added
+(`package_analyzer.py`).
+
+The existing scripts `dependencies_counter.py` and `repositories_analyzer.py`
+have been partly modified to produce their analysis with respected to API
+packages.
+
+## Setup
+The `./process/run.sh` aims at providing an easy means to run the whole process.
+As downloading and parsing all repositories would take a long time, the parsed
+data is downloaded from a student's university owncloud and extracted into the
+data directory.
+Then, several analysis steps are run, which (re-)create a number of files in the
+output directory.
+
+Some visualizations are also (re-)created.
+
+
+
+--- original README.md ---
 # About
 This repository contains the code underlying the master thesis "Applying API Categories to the Abstractions Using APIs" (2021) written by Katharina Gorjatschev in the Software Languages Team at the Computer Science Department of the University of Koblenz and Landau.
 
-This readme was created to help the MSR 2021/22 course to understand the code structure easier. 
+This readme was created to help the MSR 2021/22 course to understand the code structure easier.
 
 # Code structure
 The code consists of Java and Python code. Java is used for data collection and parsing, Python is used for analysis and visualization (because of PySpark and Plotly). All Java code is executed from the `Application.java` file. There are four Python files. Three of them are independent of each other and all have an own main function for the execution of the code. The last file `utils.py` is just a utils file.
