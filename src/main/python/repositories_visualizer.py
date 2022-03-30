@@ -133,8 +133,14 @@ def visualize(repository: str, abstraction: str, characterization_type: str, app
 
 
 if __name__ == "__main__":
-    sc = SparkContext("local", "applying-apis")
-    spark = SparkSession(sc)
+    sc = SparkContext.getOrCreate()
+    spark = (
+        SparkSession.builder.appName("MSR")
+        .config("spark.driver.memory", "10g")
+        .config("spark.executor.memory", "15g")
+        .config("spark.executor.cores", "4")
+        .getOrCreate()
+    )
 
     dependency1 = "org.mockito:mockito-core"
     dependency2 = "org.hamcrest:hamcrest-all"

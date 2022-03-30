@@ -1,11 +1,18 @@
 import os
+import sys
+
+import utils as u
+
+from typing import List
 
 import seaborn as sns
+from pandas import DataFrame as pdDataFrame
 import matplotlib.pyplot as plt
 
 import pyspark.sql.functions as F
 from pyspark.sql.window import Window
 from pyspark.sql.session import SparkSession
+from pyspark.sql.dataframe import DataFrame
 
 PAIRS = [
     ("junit:junit", "org.mockito:mockito-core"),
@@ -40,20 +47,20 @@ PAIRS = [
 ]
 
 
-def read_dir(spark: SparkSession, directory: str):
+def read_dir(spark: SparkSession, directory: str) -> DataFrame:
     print(f"Reading {directory}")
     files = [f"{directory}/{file}" for file in os.listdir(directory)]
 
     return spark.read.option("inferSchema", "true").option("header", "true").csv(files)
 
 
-def write(df, name):
+def write(df: DataFrame, name: str) -> None:
     print(f"Writing {name}")
 
     (df.write.format("csv").option("header", "true").mode("overwrite").save(name))
 
 
-def enrich(df):
+def enrich(df: DataFrame) -> DataFrame:
     # basic filtering & creating columns
     df = (
         df.filter(df.isAPIClass == "true")
@@ -65,16 +72,6 @@ def enrich(df):
         )
         .withColumn("packageList", F.split("package", "\\."))
         .withColumn("packageDepth", F.size("packageList"))
-        # Fix mislabeled hamcrest api uses
-        .withColumn(
-            "fixedApi",
-            F.when(
-                F.col("package").substr(0, 12) == "org.hamcrest",
-                "org.hamcrest:hamcrest-all",
-            ).otherwise(df.api),
-        )
-        .drop("api")
-        .withColumnRenamed("fixedApi", "api")
     )
 
     # determine the actual api base packages
@@ -111,7 +108,7 @@ def enrich(df):
     )
 
 
-def analyze(df, group, api1, api2):
+def analyze(df: DataFrame, group: List, api1: str, api2: str) -> DataFrame:
     fst = F.when(df.api == api1, F.col("package")).otherwise(None)
     snd = F.when(df.api == api2, F.col("package")).otherwise(None)
 
@@ -136,7 +133,10 @@ def analyze(df, group, api1, api2):
     )
 
 
-def visualize(res1, res2, res3, api1, api2):
+def visualize(
+    res1: pdDataFrame, res2: pdDataFrame, res3: pdDataFrame, api1: str, api2: str
+) -> None:
+    print(f"Visualizing {api1} and {api2}")
     sns.set(rc={"figure.figsize": (16, 8)})
 
     f, (ax1, ax2, ax3, axcb) = plt.subplots(
@@ -199,7 +199,39 @@ def visualize(res1, res2, res3, api1, api2):
     # plt.show()
 
 
-def main():
+def create_repositories_file(df: DataFrame)->None:
+    print("Creating repositories file...")
+
+    u.delete_dir(u.spark_dir)
+    u.write_csv(
+        df.groupBy("repository")
+        .agg(F.collect_set("package").alias("packageList"))
+        .withColumn("pre", F.lit("["))
+        .withColumn("post", F.lit("]"))
+        .withColumn(
+            "packages", F.concat("pre", F.array_join("packageList", ","), "post")
+        )
+        .withColumn("repositoryName", F.regexp_replace("repository", "_", "/"))
+        .select("repositoryName", "packages"),
+        u.spark_dir,
+    )
+    u.copy_csv(u.spark_dir, "./output/repositories_with_packages.csv")
+    u.delete_dir(u.spark_dir)
+
+def create_dependencies_with_packages_file(df: DataFrame)->None:
+    print("Creating dependencies with packages file...")
+
+    u.delete_dir(u.spark_dir)
+    u.write_csv(
+        df.groupBy("package")
+        .agg(F.first("api").alias("api")),
+        u.spark_dir,
+    )
+    u.copy_csv(u.spark_dir, "./output/dependencies_with_packages.csv")
+    u.delete_dir(u.spark_dir)
+
+
+if __name__ == "__main__":
     spark = (
         SparkSession.builder.appName("MSR")
         .config("spark.driver.memory", "10g")
@@ -208,19 +240,23 @@ def main():
         .getOrCreate()
     )
 
-    if os.path.exists("./output/analyzed_packages/joined"):
+    if os.path.exists("./output/analyzed_packages/enriched"):
         print("Joined table already exists")
-        df = read_dir(spark, "./output/analyzed_packages/joined")
+        df = read_dir(spark, "./output/analyzed_packages/enriched")
     else:
         print("Joined table does not exist yet, running full analysis")
         df = read_dir(spark, "./output/data")
         df = enrich(df)
 
-        write(df.sample(fraction=1.0), "./output/analyzed_packages/joined")
+        write(df, "./output/analyzed_packages/enriched")
+        df = read_dir(spark, "./output/analyzed_packages/enriched")
 
-    for api1, api2 in PAIRS:
+    create_repositories_file(df)
+    create_dependencies_with_packages_file(df)
+
+    for api1, api2 in PAIRS[:3]:
         try:
-            groupPkg = ["repository", "packageName"]
+            groupPkg = ["repository"]
             groupCls = ["repository", "packageName", "className"]
             groupMtd = ["repository", "packageName", "className", "methodName"]
 
@@ -236,7 +272,3 @@ def main():
         except Exception as e:
             print(f"Failed to visualize {api1} and {api2}")
             print(e)
-
-
-if __name__ == "__main__":
-    main()
